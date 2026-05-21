@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>网络拓扑编辑器</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#0d1117;--surface:#161b22;--border:#21262d;--border2:#30363d;
+    --text:#e2e8f0;--muted:#8b949e;--accent:#1f6feb;--accent2:#58a6ff;
+    --green:#22c55e;--orange:#f97316;--red:#ef4444;
+  }
+  body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;line-height:1.6}
+  a{color:var(--accent2);text-decoration:none}
+  a:hover{text-decoration:underline}
+
+  /* NAV */
+  nav{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px solid var(--border);
+    display:flex;align-items:center;justify-content:space-between;padding:0 32px;height:56px}
+  .nav-logo{font-size:16px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:10px}
+  .nav-logo svg{opacity:.85}
+  .nav-links{display:flex;gap:24px;font-size:13px;color:var(--muted)}
+  .nav-cta{background:var(--accent);color:#fff;padding:7px 18px;border-radius:6px;font-size:13px;font-weight:600;transition:opacity .15s}
+  .nav-cta:hover{opacity:.85;text-decoration:none}
+
+  /* HERO */
+  .hero{text-align:center;padding:80px 24px 60px;max-width:760px;margin:0 auto}
+  .badge{display:inline-block;background:#1f6feb22;color:var(--accent2);border:1px solid #1f6feb44;
+    border-radius:20px;padding:4px 14px;font-size:12px;font-weight:600;letter-spacing:.4px;margin-bottom:24px}
+  h1{font-size:clamp(32px,5vw,52px);font-weight:800;line-height:1.15;margin-bottom:16px;
+    background:linear-gradient(135deg,#e2e8f0 0%,#94a3b8 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+  .hero-sub{font-size:17px;color:var(--muted);margin-bottom:36px;max-width:540px;margin-left:auto;margin-right:auto}
+  .hero-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+  .btn-primary{background:var(--accent);color:#fff;padding:12px 28px;border-radius:8px;font-size:15px;font-weight:600;transition:opacity .15s}
+  .btn-primary:hover{opacity:.85;text-decoration:none}
+  .btn-ghost{border:1px solid var(--border2);color:var(--text);padding:12px 28px;border-radius:8px;font-size:15px;font-weight:500;transition:all .15s}
+  .btn-ghost:hover{border-color:var(--accent2);color:var(--accent2);text-decoration:none}
+
+  /* PREVIEW */
+  .preview{max-width:900px;margin:0 auto 80px;padding:0 24px}
+  .preview-wrap{border:1px solid var(--border);border-radius:12px;overflow:hidden;
+    box-shadow:0 0 0 1px var(--border),0 20px 60px #00000080}
+  .preview-bar{background:var(--surface);padding:10px 16px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border)}
+  .dot{width:12px;height:12px;border-radius:50%}
+  .preview-title{font-size:12px;color:var(--muted);margin-left:8px}
+  .preview-wrap iframe{width:100%;height:520px;border:none;display:block;background:var(--bg)}
+
+  /* FEATURES */
+  .section{max-width:900px;margin:0 auto 80px;padding:0 24px}
+  .section-title{font-size:13px;font-weight:600;color:var(--accent2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px}
+  .section-h{font-size:28px;font-weight:700;margin-bottom:40px}
+  .features{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+  .feat{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px}
+  .feat-icon{font-size:22px;margin-bottom:10px}
+  .feat h3{font-size:14px;font-weight:700;margin-bottom:6px}
+  .feat p{font-size:13px;color:var(--muted);line-height:1.55}
+
+  /* SHORTCUTS */
+  .shortcut-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:8px}
+  .sc-group{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px 16px}
+  .sc-group-title{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}
+  .sc-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:13px}
+  .sc-row+.sc-row{border-top:1px solid var(--border)}
+  kbd{background:#0d1117;border:1px solid var(--border2);border-radius:4px;padding:2px 7px;font-size:11px;font-family:monospace;color:var(--muted)}
+
+  /* ICONS */
+  .icon-section{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:24px}
+  .icon-cats{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+  .tag{background:#0d1117;border:1px solid var(--border);border-radius:20px;padding:4px 12px;font-size:12px;color:var(--muted)}
+  .tag.hl{border-color:var(--accent);color:var(--accent2)}
+
+  /* FORMAT */
+  pre{background:#0d1117;border:1px solid var(--border);border-radius:8px;padding:16px;font-size:12px;
+    color:#a8d8a8;overflow-x:auto;line-height:1.7;margin-top:16px}
+
+  /* FOOTER */
+  footer{border-top:1px solid var(--border);padding:32px 24px;text-align:center;color:var(--muted);font-size:13px}
+  footer a{color:var(--muted)}
+  footer a:hover{color:var(--text)}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#58a6ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/>
+      <line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/>
+    </svg>
+    网络拓扑编辑器
+  </div>
+  <div class="nav-links">
+    <a href="#features">功能</a>
+    <a href="#shortcuts">快捷键</a>
+    <a href="#format">数据格式</a>
+  </div>
+  <a class="nav-cta" href="network-topology.html" target="_blank">打开编辑器 →</a>
+</nav>
+
+<div class="hero">
+  <div class="badge">开源 · 单文件 · 无依赖</div>
+  <h1>网络拓扑图<br>在线编辑器</h1>
+  <p class="hero-sub">专为医院、企业网络架构设计的拓扑图工具。纯浏览器运行，数据存本地，导出高清 PNG / SVG / JSON。</p>
+  <div class="hero-btns">
+    <a class="btn-primary" href="network-topology.html" target="_blank">立即使用</a>
+    <a class="btn-ghost" href="https://github.com/" target="_blank">GitHub →</a>
+  </div>
+</div>
+
+<div class="preview">
+  <div class="preview-wrap">
+    <div class="preview-bar">
+      <div class="dot" style="background:#ef4444"></div>
+      <div class="dot" style="background:#f97316"></div>
+      <div class="dot" style="background:#22c55e"></div>
+      <span class="preview-title">network-topology.html</span>
+    </div>
+    <iframe src="network-topology.html" title="编辑器预览"></iframe>
+  </div>
+</div>
+
+<div class="section" id="features">
+  <div class="section-title">功能特性</div>
+  <div class="section-h">开箱即用，无需安装</div>
+  <div class="features">
+    <div class="feat">
+      <div class="feat-icon">🖱️</div>
+      <h3>拖拽编辑</h3>
+      <p>从左侧图标库拖入节点，鼠标拖动移位，双击修改标签，所有操作即时响应。</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">🔗</div>
+      <h3>锚点连线</h3>
+      <p>按 <kbd>E</kbd> 切换连线模式，在节点上拖拽即可连线。支持曲线 / 直线 / 折线，可配置箭头样式、线宽、颜色、虚线。</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">🏥</div>
+      <h3>医院信息系统图标</h3>
+      <p>内置 HIS、EMR、LIS、PACS、CDSS、OR、ICU 等 30+ 医院 IS 缩写图标，以及医生、患者、显微镜、WSI 扫描仪等医疗场景图标。</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">🌐</div>
+      <h3>网络设备图标</h3>
+      <p>防火墙、交换机、路由器、负载均衡、WAF、VPN、K8s、Docker、etcd 等 50+ 图标覆盖常见网络架构场景。</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">⬚</div>
+      <h3>区域分组</h3>
+      <p>按 <kbd>Z</kbd> 绘制区域框，支持命名、配色、透明度调整，可上下移层，适合标注安全域、网段分区。</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">⬜</div>
+      <h3>多选与对齐</h3>
+      <p>框选或 Shift 点击多选节点，支持行对齐（Y轴）、列对齐（X轴）、水平 / 垂直均布，方向键微调位置。</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">📤</div>
+      <h3>高清导出</h3>
+      <p>导出整图为 4x 高清 PNG（可选 2x/3x/4x），或导出矢量 SVG、结构化 JSON。JSON 可导入继续编辑。</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">📐</div>
+      <h3>网格对齐</h3>
+      <p>按 <kbd>G</kbd> 开启网格，拖拽自动吸附，可调整网格间距。方向键步长跟随网格大小。</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">↩️</div>
+      <h3>撤销 / 重做</h3>
+      <p>60 步操作历史，<kbd>Ctrl+Z</kbd> 撤销，<kbd>Ctrl+Y</kbd> 重做。每次操作自动存入 localStorage 草稿。</p>
+    </div>
+  </div>
+</div>
+
+<div class="section" id="shortcuts">
+  <div class="section-title">键盘快捷键</div>
+  <div class="section-h">高效操作参考</div>
+  <div class="shortcut-grid">
+
+    <div class="sc-group">
+      <div class="sc-group-title">工具切换</div>
+      <div class="sc-row"><span>选择工具</span><kbd>V</kbd></div>
+      <div class="sc-row"><span>连线工具</span><kbd>E</kbd></div>
+      <div class="sc-row"><span>区域工具</span><kbd>Z</kbd></div>
+      <div class="sc-row"><span>平移工具</span><kbd>空格</kbd></div>
+      <div class="sc-row"><span>取消 / 退出</span><kbd>Esc</kbd></div>
+    </div>
+
+    <div class="sc-group">
+      <div class="sc-group-title">编辑操作</div>
+      <div class="sc-row"><span>撤销</span><kbd>Ctrl+Z</kbd></div>
+      <div class="sc-row"><span>重做</span><kbd>Ctrl+Y</kbd></div>
+      <div class="sc-row"><span>复制</span><kbd>Ctrl+C</kbd></div>
+      <div class="sc-row"><span>粘贴</span><kbd>Ctrl+V</kbd></div>
+      <div class="sc-row"><span>就地复制</span><kbd>Ctrl+D</kbd></div>
+      <div class="sc-row"><span>删除</span><kbd>Del</kbd></div>
+    </div>
+
+    <div class="sc-group">
+      <div class="sc-group-title">选择</div>
+      <div class="sc-row"><span>全选节点</span><kbd>Ctrl+A</kbd></div>
+      <div class="sc-row"><span>追加选中</span><kbd>Shift+点击</kbd></div>
+      <div class="sc-row"><span>框选</span><kbd>拖拽空白</kbd></div>
+    </div>
+
+    <div class="sc-group">
+      <div class="sc-group-title">位置微调</div>
+      <div class="sc-row"><span>移动（跟随网格）</span><kbd>↑ ↓ ← →</kbd></div>
+      <div class="sc-row"><span>移动 1px</span><kbd>Shift+方向键</kbd></div>
+    </div>
+
+    <div class="sc-group">
+      <div class="sc-group-title">视图</div>
+      <div class="sc-row"><span>缩放</span><kbd>Ctrl+滚轮</kbd></div>
+      <div class="sc-row"><span>平移</span><kbd>滚轮</kbd></div>
+      <div class="sc-row"><span>适应画布</span><kbd>Fit 按钮</kbd></div>
+      <div class="sc-row"><span>网格开关</span><kbd>G</kbd></div>
+    </div>
+
+    <div class="sc-group">
+      <div class="sc-group-title">图层</div>
+      <div class="sc-row"><span>上移一层</span><kbd>]</kbd></div>
+      <div class="sc-row"><span>下移一层</span><kbd>[</kbd></div>
+      <div class="sc-row"><span>置顶</span><kbd>Shift+]</kbd></div>
+      <div class="sc-row"><span>置底</span><kbd>Shift+[</kbd></div>
+    </div>
+
+    <div class="sc-group">
+      <div class="sc-group-title">文件</div>
+      <div class="sc-row"><span>保存草稿</span><kbd>Ctrl+S</kbd></div>
+      <div class="sc-row"><span>导出 JSON</span><kbd>JSON 按钮</kbd></div>
+      <div class="sc-row"><span>导出 PNG</span><kbd>PNG 按钮</kbd></div>
+      <div class="sc-row"><span>导出 SVG</span><kbd>SVG 按钮</kbd></div>
+    </div>
+
+    <div class="sc-group">
+      <div class="sc-group-title">右键菜单</div>
+      <div class="sc-row"><span>节点 / 连线 / 区域</span><span style="color:var(--muted)">右键单击</span></div>
+      <div class="sc-row"><span>多选批量操作</span><span style="color:var(--muted)">多选后右键</span></div>
+    </div>
+
+  </div>
+</div>
+
+<div class="section" id="format">
+  <div class="section-title">数据格式</div>
+  <div class="section-h">JSON 结构说明</div>
+  <p style="color:var(--muted);font-size:14px;margin-bottom:16px">
+    编辑器自动将画布数据以 JSON 格式保存到浏览器 localStorage（key: <code style="color:var(--accent2)">topology_v1</code>），
+    同时可通过工具栏 <strong>JSON</strong> 按钮导出文件，<strong>导入</strong>按钮重新加载。
+  </p>
+  <pre>{
+  "nodes": [
+    {
+      "id": "n_abc123",       // 节点唯一 ID
+      "x": 120, "y": 80,     // 画布坐标（中心点）
+      "icon": "his",          // 图标名称
+      "label": "HIS系统",     // 显示标签
+      "color": "#3b82f6",     // 颜色（hex）
+      "size": 27              // 节点半径（px）
+    }
+  ],
+  "edges": [
+    {
+      "id": "e_xyz",
+      "src": "n_abc123", "dst": "n_def456",  // 源/目标节点 ID
+      "srcAnchor": "e", "dstAnchor": "w",    // 锚点方向：n/ne/e/se/s/sw/w/nw/c
+      "color": "#475569", "width": 1.5,
+      "dash": "solid",                        // solid / dashed / dotted / longdash
+      "lineType": "curve",                    // curve / straight / ortho
+      "startArrow": "none", "endArrow": "arrow",  // none / arrow / open / circle / diamond
+      "label": ""
+    }
+  ],
+  "zones": [
+    {
+      "id": "z1",
+      "x": 20, "y": 20, "w": 300, "h": 200,  // 左上角坐标及宽高
+      "label": "业务服务器区",
+      "color": "#3b82f6",
+      "op": 0.07                               // 填充透明度
+    }
+  ]
+}</pre>
+</div>
+
+<div class="section">
+  <div class="section-title">内置图标库</div>
+  <div class="section-h">覆盖医疗与网络场景</div>
+  <div class="icon-section">
+    <div class="icon-cats">
+      <span class="tag hl">医院核心系统</span>
+      <span class="tag">HIS</span><span class="tag">EMR</span><span class="tag">EHR</span>
+      <span class="tag">LIS</span><span class="tag">PACS</span><span class="tag">RIS</span>
+      <span class="tag">CIS</span><span class="tag">NIS</span><span class="tag">MPI</span>
+      <span class="tag">CDSS</span><span class="tag">INT 集成平台</span><span class="tag">ESB</span><span class="tag">SSO</span>
+    </div>
+    <div class="icon-cats">
+      <span class="tag hl">临床专科系统</span>
+      <span class="tag">OR 手术室</span><span class="tag">ANS 麻醉</span><span class="tag">ICU</span>
+      <span class="tag">DS 日间手术</span><span class="tag">BLD 输血</span><span class="tag">HAI 医院感染</span>
+      <span class="tag">IDS 传染病</span><span class="tag">AE 不良事件</span><span class="tag">PHA 药房</span>
+    </div>
+    <div class="icon-cats">
+      <span class="tag hl">医疗角色 / 设备</span>
+      <span class="tag">医生</span><span class="tag">患者</span><span class="tag">会诊</span>
+      <span class="tag">显微镜</span><span class="tag">WSI 扫描仪</span><span class="tag">病理报告</span>
+      <span class="tag">教学</span><span class="tag">AI 诊断</span><span class="tag">GPU</span>
+    </div>
+    <div class="icon-cats">
+      <span class="tag hl">网络 / 安全设备</span>
+      <span class="tag">防火墙</span><span class="tag">WAF</span><span class="tag">网闸</span>
+      <span class="tag">交换机</span><span class="tag">路由器</span><span class="tag">负载均衡</span>
+      <span class="tag">VPN</span><span class="tag">堡垒机</span><span class="tag">AP</span>
+    </div>
+    <div class="icon-cats">
+      <span class="tag hl">虚拟化 / 云原生</span>
+      <span class="tag">VM</span><span class="tag">K8s</span><span class="tag">Pod</span>
+      <span class="tag">Docker</span><span class="tag">Ingress</span><span class="tag">Namespace</span><span class="tag">etcd</span>
+    </div>
+    <div class="icon-cats">
+      <span class="tag hl">运营行政系统</span>
+      <span class="tag">OA</span><span class="tag">ERP</span><span class="tag">HR</span>
+      <span class="tag">FM 后勤</span><span class="tag">CRM</span><span class="tag">BI</span>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <p style="margin-bottom:8px">网络拓扑编辑器 · 单文件，无服务端，纯浏览器运行</p>
+  <p><a href="network-topology.html" target="_blank">打开编辑器</a> · <a href="https://github.com/" target="_blank">GitHub</a> · MIT License</p>
+</footer>
+
+</body>
+</html>
